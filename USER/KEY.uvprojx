@@ -518,6 +518,11 @@
               <FileType>1</FileType>
               <FilePath>..\SCOPE\bsp_screen.c</FilePath>
             </File>
+            <File>
+              <FileName>scope_algo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\SCOPE\scope_algo.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
