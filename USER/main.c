@@ -229,7 +229,7 @@ int main(void)
     BSP_Screen_Init();
     BSP_ADC_TIM_Init();
 
-    BSP_Debug_Printf("[scope] system init done\r\n");
+    SCOPE_DBG("[scope] system init done\r\n");
 
     /* Æô¶¯²É¼¯ */
     BSP_ADC_TIM_Start();

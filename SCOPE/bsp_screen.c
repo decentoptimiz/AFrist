@@ -295,6 +295,6 @@ void Screen_Erase_Wave(void)
 /*===========================================================================*/
 __weak void BSP_Screen_TouchHandler(uint8_t page_id, uint8_t ctrl_id, uint8_t action)
 {
-    BSP_Debug_Printf("[touch] page=%d ctrl=%d action=%d\r\n",
-                     page_id, ctrl_id, action);
+    SCOPE_DBG("[touch] page=%d ctrl=%d action=%d\r\n",
+              page_id, ctrl_id, action);
 }

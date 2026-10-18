@@ -8,6 +8,7 @@
 #define __BSP_ADC_TIM_H
 
 #include "scope_types.h"
+#include "scope_config.h"
 
 /*---------------------------------------------------------------------------*/
 /* DMA 乒乓缓冲 (双ADC 12位数据打包成32位字: 高16位CH1, 低16位CH2)            */
@@ -20,6 +21,13 @@ extern volatile uint8_t adc_full_flag;
 
 void BSP_Debug_Init(uint32_t baud);                  /* USART2 调试串口初始化      */
 void BSP_Debug_Printf(const char *fmt, ...);         /* 调试打印 (输出到 USART2)   */
+
+/* 调试打印包装宏: SCOPE_DEBUG_PRINT=0 时编译为空操作 */
+#if SCOPE_DEBUG_PRINT
+#define SCOPE_DBG(...)   BSP_Debug_Printf(__VA_ARGS__)
+#else
+#define SCOPE_DBG(...)   ((void)0)
+#endif
 
 void BSP_ADC_TIM_Init(void);                         /* TIM3 + 双ADC + DMA 初始化  */
 void BSP_ADC_TIM_Start(void);                        /* 启动 TIM3 触发与 ADC 采样   */

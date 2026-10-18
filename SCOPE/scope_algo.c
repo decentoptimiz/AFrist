@@ -34,7 +34,7 @@ int Find_Trigger(const uint16_t *data, int len, uint16_t level, int edge)
             if ((int32_t)data[i - 1] < (int32_t)level - TRIG_HYST &&
                 (int32_t)data[i]     > (int32_t)level + TRIG_HYST)
             {
-                BSP_Debug_Printf("[trig] edge=RISING idx=%d\r\n", i);
+                SCOPE_DBG("[trig] edge=RISING idx=%d\r\n", i);
                 return i;
             }
         }
@@ -43,13 +43,13 @@ int Find_Trigger(const uint16_t *data, int len, uint16_t level, int edge)
             if ((int32_t)data[i - 1] > (int32_t)level + TRIG_HYST &&
                 (int32_t)data[i]     < (int32_t)level - TRIG_HYST)
             {
-                BSP_Debug_Printf("[trig] edge=FALLING idx=%d\r\n", i);
+                SCOPE_DBG("[trig] edge=FALLING idx=%d\r\n", i);
                 return i;
             }
         }
     }
 
-    BSP_Debug_Printf("[trig] miss\r\n");
+    SCOPE_DBG("[trig] miss\r\n");
     return -1;
 }
 
@@ -85,7 +85,7 @@ void Scope_Measure_VppAvg(const float *data, int len, float *vpp, float *avg)
     *vpp = vmax - vmin;
     *avg = sum / (float)len;
 
-    BSP_Debug_Printf("[vpp] Vpp=%.4f V avg=%.4f V\r\n", *vpp, *avg);
+    SCOPE_DBG("[vpp] Vpp=%.4f V avg=%.4f V\r\n", *vpp, *avg);
 }
 
 /*===========================================================================*/
@@ -106,7 +106,7 @@ float Scope_Measure_Freq(const float *data, int len, float fs)
 
     if (len < 3 || fs <= 0.0f)
     {
-        BSP_Debug_Printf("[freq] Freq=0.00 Hz\r\n");
+        SCOPE_DBG("[freq] Freq=0.00 Hz\r\n");
         return 0.0f;
     }
 
@@ -132,7 +132,7 @@ float Scope_Measure_Freq(const float *data, int len, float fs)
     if (zc >= 2)
         freq = (float)(zc - 1) / (last_t - first_t) * fs;
 
-    BSP_Debug_Printf("[freq] Freq=%.2f Hz (zeros=%d)\r\n", freq, zc);
+    SCOPE_DBG("[freq] Freq=%.2f Hz (zeros=%d)\r\n", freq, zc);
     return freq;
 }
 
@@ -252,7 +252,7 @@ float Scope_Measure_Phase(const float *ch1, const float *ch2, int len)
 
     if (max_bin == 0)
     {
-        BSP_Debug_Printf("[phase] Phase=0.00 deg (no signal)\r\n");
+        SCOPE_DBG("[phase] Phase=0.00 deg (no signal)\r\n");
         return 0.0f;
     }
 
@@ -263,6 +263,6 @@ float Scope_Measure_Phase(const float *ch1, const float *ch2, int len)
     if (dphi < 0.0f)    dphi += 360.0f;
     if (dphi >= 360.0f) dphi -= 360.0f;
 
-    BSP_Debug_Printf("[phase] Phase=%.2f deg (bin=%d)\r\n", dphi, max_bin);
+    SCOPE_DBG("[phase] Phase=%.2f deg (bin=%d)\r\n", dphi, max_bin);
     return dphi;
 }
