@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F40_41xxx,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\HARDWARE\LED;..\HARDWARE\BEEP;..\HARDWARE\KEY;..\FWLIB\inc;..\HARDWARE\EXTI</IncludePath>
+              <IncludePath>..\CORE;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\HARDWARE\LED;..\HARDWARE\BEEP;..\HARDWARE\KEY;..\FWLIB\inc;..\HARDWARE\EXTI;..\SCOPE</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -492,6 +492,31 @@
               <FileName>stm32f4xx_exti.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\FWLIB\src\stm32f4xx_exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\FWLIB\src\stm32f4xx_adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_dma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\FWLIB\src\stm32f4xx_dma.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>SCOPE</GroupName>
+          <Files>
+            <File>
+              <FileName>bsp_adc_tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\SCOPE\bsp_adc_tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_screen.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\SCOPE\bsp_screen.c</FilePath>
             </File>
           </Files>
         </Group>
