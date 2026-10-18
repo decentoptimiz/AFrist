@@ -1,0 +1,21 @@
+# Keil MDK 工程 clangd 配置（STM32F407, KEY 工程）
+CompileFlags:
+  # 本项目实际编译使用 ARM Compiler 5 (V5.06 update 7) -> armcc.exe
+  Compiler: D:\AppGallery\Downloads\ARM\ARMCC\bin\armcc.exe
+  # 备选：AC6 (armclang, clang 系，--query-driver 可正常查询内置头文件)
+  # Compiler: D:\AppGallery\Downloads\ARM\ARMCLANG\bin\armclang.exe
+  # 以下宏与包含路径从 KEY.uvprojx 的 <Cads> 段解析而来
+  # 现已改用 compile_commands.json，Add 暂时清空（原内容保留为注释，便于恢复）
+  Add: []
+  #    - "-DSTM32F40_41xxx"
+  #    - "-DUSE_STDPERIPH_DRIVER"
+  #    - "-ID:/AFirst/CORE"
+  #    - "-ID:/AFirst/SYSTEM/delay"
+  #    - "-ID:/AFirst/SYSTEM/sys"
+  #    - "-ID:/AFirst/SYSTEM/usart"
+  #    - "-ID:/AFirst/USER"
+  #    - "-ID:/AFirst/HARDWARE/LED"
+  #    - "-ID:/AFirst/HARDWARE/BEEP"
+  #    - "-ID:/AFirst/HARDWARE/KEY"
+  #    - "-ID:/AFirst/FWLIB/inc"
+  #    - "-ID:/AFirst/HARDWARE/EXTI"

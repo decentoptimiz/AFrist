@@ -19,3 +19,6 @@
 # Keil user-specific settings
 *.uvoptx
 *.uvguix.*
+
+# clangd generated
+compile_commands.json
