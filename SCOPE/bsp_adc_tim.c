@@ -23,7 +23,7 @@ CalibParams_t cal_table[CAL_CH_CNT][CAL_GAIN_CNT] = {
 };
 
 /* DMA 乒乓缓冲: 双ADC 12位数据打包成32位字(高16位CH1, 低16位CH2) */
-uint32_t adc_buf[ADC_BUF_SIZE];
+volatile uint32_t adc_buf[ADC_BUF_SIZE];
 
 /* 半满/全满标志 */
 volatile uint8_t adc_half_flag = 0;
