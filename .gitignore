@@ -22,3 +22,6 @@
 
 # clangd generated
 compile_commands.json
+
+# embeddedskills local state
+/.embeddedskills/
