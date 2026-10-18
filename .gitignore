@@ -1,0 +1,21 @@
+# Keil MDK build output
+/OBJ/
+/Listings/
+/Objects/
+*.o
+*.obj
+*.crf
+*.d
+*.dep
+*.lnp
+*.axf
+*.elf
+*.hex
+*.bin
+*.map
+*.lst
+*.build_log.htm
+
+# Keil user-specific settings
+*.uvoptx
+*.uvguix.*
