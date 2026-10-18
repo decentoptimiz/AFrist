@@ -215,8 +215,21 @@ void BSP_ADC_TIM_Start(void)
 }
 
 /*===========================================================================*/
+/* 名称: Scope_ADC_HalfCpltCallback / Scope_ADC_CpltCallback (弱定义)           */
+/* 功能: DMA 半满/全满回调 (SPL 下等价于 HAL_ADC_ConvHalfCpltCallback/           */
+/*       HAL_ADC_ConvCpltCallback), 应用层可覆盖实现自己的乒乓处理逻辑          */
+/*===========================================================================*/
+__weak void Scope_ADC_HalfCpltCallback(void)
+{
+}
+
+__weak void Scope_ADC_CpltCallback(void)
+{
+}
+
+/*===========================================================================*/
 /* 名称: DMA2_Stream0_IRQHandler                                               */
-/* 功能: DMA 半满/全满中断 (乒乓缓冲标志)                                        */
+/* 功能: DMA 半满/全满中断 (乒乓缓冲标志 + 回调)                                 */
 /*===========================================================================*/
 void DMA2_Stream0_IRQHandler(void)
 {
@@ -224,11 +237,67 @@ void DMA2_Stream0_IRQHandler(void)
     {
         DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_HTIF0);
         adc_half_flag = 1;
+        Scope_ADC_HalfCpltCallback();
     }
 
     if (DMA_GetITStatus(DMA2_Stream0, DMA_IT_TCIF0) != RESET)
     {
         DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
         adc_full_flag = 1;
+        Scope_ADC_CpltCallback();
+    }
+}
+
+/*===========================================================================*/
+/* 名称: Scope_Read_Data                                                       */
+/* 功能: 将 32 位 DMA 数据拆分为高16位(CH1)和低16位(CH2)原始码值                */
+/* 参数: ch1 - CH1 码值输出缓冲, ch2 - CH2 码值输出缓冲, len - 点数             */
+/*===========================================================================*/
+void Scope_Read_Data(uint16_t *ch1, uint16_t *ch2, int len)
+{
+    int i;
+
+    for (i = 0; i < len; i++)
+    {
+        ch1[i] = (uint16_t)((adc_buf[i] >> 16) & 0xFFFF);
+        ch2[i] = (uint16_t)(adc_buf[i] & 0xFFFF);
+    }
+}
+
+/*===========================================================================*/
+/* 名称: Scope_Code2Voltage                                                     */
+/* 功能: 套用标定公式 V = code * k + b, 将 ADC 码值换算为真实电压                */
+/* 参数: ch - 通道号(0/1), gain - 增益档位, code - ADC码值                       */
+/* 返回: 真实电压值 (float)                                                     */
+/*===========================================================================*/
+float Scope_Code2Voltage(uint8_t ch, uint8_t gain, uint16_t code)
+{
+    if (ch >= CAL_CH_CNT)
+        ch = 0;
+    if (gain >= CAL_GAIN_CNT)
+        gain = 0;
+
+    return cal_table[ch][gain].k * (float)code + cal_table[ch][gain].b;
+}
+
+/*===========================================================================*/
+/* 名称: Scope_Read_Voltage                                                     */
+/* 功能: 拆包 32 位 DMA 数据并换算为真实电压 (float)                             */
+/* 参数: ch1_v/ch2_v - 电压输出缓冲, len - 点数,                                */
+/*       ch1_gain/ch2_gain - 两通道当前增益档位                                 */
+/*===========================================================================*/
+void Scope_Read_Voltage(float *ch1_v, float *ch2_v, int len, uint8_t ch1_gain, uint8_t ch2_gain)
+{
+    int      i;
+    uint16_t c1;
+    uint16_t c2;
+
+    for (i = 0; i < len; i++)
+    {
+        c1 = (uint16_t)((adc_buf[i] >> 16) & 0xFFFF);
+        c2 = (uint16_t)(adc_buf[i] & 0xFFFF);
+
+        ch1_v[i] = Scope_Code2Voltage(0, ch1_gain, c1);
+        ch2_v[i] = Scope_Code2Voltage(1, ch2_gain, c2);
     }
 }
