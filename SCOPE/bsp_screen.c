@@ -156,18 +156,19 @@ void USART1_IRQHandler(void)
 
 /*===========================================================================*/
 /* 名称: Map_Voltage_To_Y                                                      */
-/* 功能: 电压值映射为屏幕 Y 坐标 (波形区起点 Y0, 高度 H, 垂直档位 Vdiv)           */
-/*       y = Y0 + H/2 - V / Vdiv * (H/8)                                      */
+/* 功能: 电压值映射为屏幕 Y 坐标 (10.1 寸屏 1024x600)                           */
+/*       波形区中心 = 屏幕中心 Y=300 (Y0=60, 高度 H=480), 每格 8 分度           */
+/*       y = (Y0 + H/2) - V / Vdiv * (H/8)                                    */
 /*===========================================================================*/
 int16_t Map_Voltage_To_Y(float V, float Vdiv)
 {
+    int center = SCREEN_WAVE_Y0 + SCREEN_WAVE_H / 2;   /* = 300 */
     int y;
 
     if (Vdiv <= 0.0f)
         Vdiv = 1.0f;
 
-    y = SCREEN_WAVE_Y0 + (SCREEN_WAVE_H / 2)
-        - (int)(V / Vdiv * (float)(SCREEN_WAVE_H / 8));
+    y = center - (int)(V / Vdiv * (float)(SCREEN_WAVE_H / 8));
 
     if (y < SCREEN_WAVE_Y0)
         y = SCREEN_WAVE_Y0;

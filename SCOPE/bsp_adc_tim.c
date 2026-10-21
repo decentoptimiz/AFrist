@@ -93,24 +93,69 @@ void BSP_Debug_Printf(const char *fmt, ...)
 }
 
 /*===========================================================================*/
-/* 名称: TIM3_Trgo_Config                                                      */
-/* 功能: 配置 TIM3 作为采样触发源, TRGO = Update Event, 50kHz                   */
+/* 名称: Timebase_GetSampleRate                                                */
+/* 功能: 返回当前水平档位对应的采样率 (Hz)                                      */
+/*       t_div_idx: 0=1ms/div, 1=10ms/div, 2=100ms/div                        */
 /*===========================================================================*/
-static void TIM3_Trgo_Config(void)
+float Timebase_GetSampleRate(int t_div_idx)
+{
+    switch (t_div_idx)
+    {
+        case 0:  return 50000.0f;   /* 1ms/div   */
+        case 1:  return  6400.0f;   /* 10ms/div  */
+        case 2:  return   640.0f;   /* 100ms/div */
+        default: return 50000.0f;
+    }
+}
+
+/*===========================================================================*/
+/* 名称: Timebase_Adjust                                                       */
+/* 功能: 按水平档位动态调整 TIM3 触发采样率 (一屏 512 点)                        */
+/*       0: 84M/(0+1)/(1679+1)   = 50kHz  -> 512/50k  = 10.24ms (1ms/div)    */
+/*       1: 84M/(0+1)/(13124+1)  = 6.4kHz -> 512/6.4k = 80ms    (10ms/div)   */
+/*       2: 84M/(3+1)/(32811+1)  = 640Hz  -> 512/640  = 800ms   (100ms/div)  */
+/*===========================================================================*/
+void Timebase_Adjust(int t_div_idx)
 {
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+    uint16_t psc;
+    uint16_t arr;
 
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+    switch (t_div_idx)
+    {
+        case 0:  psc = 0;  arr = 1679;   break;   /* 50kHz   */
+        case 1:  psc = 0;  arr = 13124;  break;   /* 6.4kHz  */
+        case 2:  psc = 3;  arr = 32811;  break;   /* 640Hz   */
+        default: return;
+    }
 
-    TIM_TimeBaseStructure.TIM_Prescaler         = TIM3_TRGO_PSC;      /* 0    */
+    /* 重新配置前先停表并清零, 避免产生错误的触发脉冲 */
+    TIM_Cmd(TIM3, DISABLE);
+    TIM_SetCounter(TIM3, 0);
+
+    TIM_TimeBaseStructure.TIM_Prescaler         = psc;
     TIM_TimeBaseStructure.TIM_CounterMode       = TIM_CounterMode_Up;
-    TIM_TimeBaseStructure.TIM_Period            = TIM3_TRGO_PERIOD;   /* 1679 */
+    TIM_TimeBaseStructure.TIM_Period            = arr;
     TIM_TimeBaseStructure.TIM_ClockDivision     = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
     TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
 
     /* TRGO = Update Event */
     TIM_SelectOutputTrigger(TIM3, TIM_TRGOSource_Update);
+
+    TIM_Cmd(TIM3, ENABLE);
+
+    SCOPE_DBG("[tb] t_div=%d fs=%dHz\r\n", t_div_idx, (int)Timebase_GetSampleRate(t_div_idx));
+}
+
+/*===========================================================================*/
+/* 名称: TIM3_Trgo_Config                                                      */
+/* 功能: 使能 TIM3 时钟并配置默认采样率 (1ms/div, 50kHz)                        */
+/*===========================================================================*/
+static void TIM3_Trgo_Config(void)
+{
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+    Timebase_Adjust(0);
 }
 
 /*===========================================================================*/

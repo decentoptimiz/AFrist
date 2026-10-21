@@ -11,11 +11,24 @@
 
 #define FFT_POINTS   512   /* FFT 点数 */
 
+/* 波形类型 (波形识别结果) */
+typedef enum {
+    WAVE_SINE     = 0,   /* 正弦波   */
+    WAVE_SQUARE   = 1,   /* 方波     */
+    WAVE_TRIANGLE = 2    /* 三角波   */
+} WaveType_t;
+
 /* 触发查找: 带迟滞的上升/下降沿搜索, 返回触发点索引, 未找到返回 -1 */
 int Find_Trigger(const uint16_t *data, int len, uint16_t level, int edge);
 
 /* Vpp 与平均值 (输入为真实电压 float), 结果写入 vpp/avg 指针 */
 void Scope_Measure_VppAvg(const float *data, int len, float *vpp, float *avg);
+
+/* 有效值 Vrms = sqrt( (1/N) * Σ Vi² ) */
+float Scope_Measure_Vrms(const float *data, int len);
+
+/* 波形识别: 依据波峰因数(Vpp/Vrms)区分正弦/方波/三角波 */
+WaveType_t Identify_Waveform(float *data, int len);
 
 /* 频率测量 (过零检测法, fs 为采样率 Hz), 返回频率 Hz */
 float Scope_Measure_Freq(const float *data, int len, float fs);

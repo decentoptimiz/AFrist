@@ -11,19 +11,19 @@
 #include "bsp_screen.h"
 #include "scope_algo.h"
 
-#define SAMPLE_RATE   50000.0f   /* 50kSa/s */
-
 /*---------------------------------------------------------------------------*/
 /* 全局运行状态与测量结果                                                       */
 /*---------------------------------------------------------------------------*/
 ScopeState_t scope;
 
 /* 测量结果 (仅主循环上下文读写, 无需 volatile) */
-static float   g_vpp       = 0.0f;
-static float   g_avg       = 0.0f;
-static float   g_freq      = 0.0f;
-static float   g_phase     = 0.0f;
-static uint8_t g_saturated = 0;
+static float     g_vpp       = 0.0f;
+static float     g_avg       = 0.0f;
+static float     g_vrms      = 0.0f;
+static float     g_freq      = 0.0f;
+static float     g_phase     = 0.0f;
+static uint8_t   g_saturated = 0;
+static WaveType_t g_wave_type = WAVE_SINE;
 
 /* AUTO 触发标志 (可能由触摸中断置位, 需 volatile) */
 static volatile uint8_t auto_trigger_flag = 1;
@@ -116,8 +116,11 @@ static void Process_Buffer(const volatile uint32_t *buf)
 
     /* 测量 */
     Scope_Measure_VppAvg(ch1_v, ADC_BUF_HALF, &g_vpp, &g_avg);
-    g_freq  = Scope_Measure_Freq(ch1_v, ADC_BUF_HALF, SAMPLE_RATE);
-    g_phase = Scope_Measure_Phase(ch1_v, ch2_v, ADC_BUF_HALF);
+    g_vrms      = Scope_Measure_Vrms(ch1_v, ADC_BUF_HALF);
+    g_freq      = Scope_Measure_Freq(ch1_v, ADC_BUF_HALF,
+                                     Timebase_GetSampleRate(scope.t_div_idx));
+    g_phase     = Scope_Measure_Phase(ch1_v, ch2_v, ADC_BUF_HALF);
+    g_wave_type = Identify_Waveform(ch1_v, ADC_BUF_HALF);
 
     /* 波形绘制 (0x76 擦除 + 0x75 绘制) */
     Screen_Erase_Wave();
@@ -189,17 +192,29 @@ static void AutoScale_Task(void)
 
 /*===========================================================================*/
 /* 名称: UI_Update_Task                                                       */
-/* 功能: 更新屏幕参数文本 (Vpp/Freq/Phase)                                      */
-/* 说明: 骨架阶段暂不发送, 测量值通过 BSP_Debug_Printf 在串口观察               */
+/* 功能: 更新屏幕参数文本 (Vpp/Vrms/Freq/Wave)                                  */
+/* 说明: 骨架阶段暂不发送到屏幕, 测量值与波形类型通过 BSP_Debug_Printf           */
+/*       输出到 USART2 串口观察; 波形类型变化时才打印, 避免刷屏                  */
 /*===========================================================================*/
 static void UI_Update_Task(void)
 {
-    /* TODO: 发送 Vpp/Freq/Phase 文本到大彩屏 */
-    /* 当前仅占位引用测量值, 避免未使用告警 */
-    (void)g_vpp;
-    (void)g_avg;
-    (void)g_freq;
-    (void)g_phase;
+    static int last_wave = -1;
+    const char *name;
+
+    if ((int)g_wave_type == last_wave)
+        return;
+
+    last_wave = (int)g_wave_type;
+
+    switch (g_wave_type)
+    {
+        case WAVE_SQUARE:   name = "SQUARE";   break;
+        case WAVE_TRIANGLE: name = "TRIANGLE"; break;
+        default:            name = "SINE";     break;
+    }
+
+    BSP_Debug_Printf("[scope] Vpp=%.3fV Vavg=%.3fV Vrms=%.3fV Freq=%.2fHz Phase=%.1f Wave=%s\r\n",
+                     g_vpp, g_avg, g_vrms, g_freq, g_phase, name);
 }
 
 /*===========================================================================*/
@@ -207,6 +222,8 @@ static void UI_Update_Task(void)
 /*===========================================================================*/
 int main(void)
 {
+    static int prev_t_div_idx = -1;
+
     delay_init(168);
 
     /* 中断优先级分组: 2 位抢占 + 2 位子优先级 */
@@ -249,6 +266,14 @@ int main(void)
         }
 
         AutoScale_Task();
+
+        /* 水平档位变化时, 动态调整 TIM3 采样率 */
+        if ((int)scope.t_div_idx != prev_t_div_idx)
+        {
+            Timebase_Adjust((int)scope.t_div_idx);
+            prev_t_div_idx = (int)scope.t_div_idx;
+        }
+
         UI_Update_Task();
     }
 }

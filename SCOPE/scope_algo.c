@@ -89,6 +89,24 @@ void Scope_Measure_VppAvg(const float *data, int len, float *vpp, float *avg)
 }
 
 /*===========================================================================*/
+/* 名称: Scope_Measure_Vrms                                                    */
+/* 功能: 计算有效值 Vrms = sqrt( (1/N) * Σ Vi² )                               */
+/*===========================================================================*/
+float Scope_Measure_Vrms(const float *data, int len)
+{
+    int   i;
+    float sum = 0.0f;
+
+    if (len <= 0)
+        return 0.0f;
+
+    for (i = 0; i < len; i++)
+        sum += data[i] * data[i];
+
+    return sqrtf(sum / (float)len);
+}
+
+/*===========================================================================*/
 /* 名称: Scope_Measure_Freq                                                    */
 /* 功能: 频率测量 (去直流后的正向过零检测, 线性插值)                              */
 /* 参数: fs - 采样率 Hz, 返回频率 Hz                                            */
@@ -265,4 +283,61 @@ float Scope_Measure_Phase(const float *ch1, const float *ch2, int len)
 
     SCOPE_DBG("[phase] Phase=%.2f deg (bin=%d)\r\n", dphi, max_bin);
     return dphi;
+}
+
+/*===========================================================================*/
+/* 名称: Identify_Waveform                                                     */
+/* 功能: 识别波形类型 (正弦波/方波/三角波)                                       */
+/* 原理: 波峰因数 Crest Factor = Vpp / Vrms_ac (去直流后的有效值)               */
+/*       正弦 ≈ 2.83, 方波 ≈ 2.00, 三角波 ≈ 3.46                               */
+/* 返回: WAVE_SINE / WAVE_SQUARE / WAVE_TRIANGLE                              */
+/*===========================================================================*/
+WaveType_t Identify_Waveform(float *data, int len)
+{
+    int   i;
+    float mean    = 0.0f;
+    float vmin;
+    float vmax;
+    float ac_sum  = 0.0f;
+    float vrms_ac;
+    float vpp;
+    float cf;
+
+    if (len <= 0)
+        return WAVE_SINE;
+
+    vmin = data[0];
+    vmax = data[0];
+    for (i = 0; i < len; i++)
+    {
+        mean += data[i];
+        if (data[i] < vmin) vmin = data[i];
+        if (data[i] > vmax) vmax = data[i];
+    }
+    mean /= (float)len;
+
+    vpp = vmax - vmin;
+
+    /* 交流有效值 (去除直流分量, 保证波峰因数不受偏置影响) */
+    for (i = 0; i < len; i++)
+    {
+        float d = data[i] - mean;
+        ac_sum += d * d;
+    }
+    vrms_ac = sqrtf(ac_sum / (float)len);
+
+    /* 无信号时默认判为正弦 */
+    if (vpp < 1e-3f || vrms_ac < 1e-4f)
+        return WAVE_SINE;
+
+    cf = vpp / vrms_ac;
+
+    SCOPE_DBG("[wave] cf=%.3f\r\n", cf);
+
+    if (cf < 2.40f)
+        return WAVE_SQUARE;    /* ≈2.00 */
+    else if (cf < 3.15f)
+        return WAVE_SINE;      /* ≈2.83 */
+    else
+        return WAVE_TRIANGLE;  /* ≈3.46 */
 }

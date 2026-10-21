@@ -12,10 +12,11 @@
 #define SCREEN_BAUD          921600  /* 大彩屏波特率           */
 #define SCREEN_TOUCH_HEADER  0x65    /* 触摸事件帧头            */
 
-/* 波形绘图区参数 */
-#define SCREEN_WAVE_X0       0       /* 波形区起点 X            */
-#define SCREEN_WAVE_Y0       0       /* 波形区起点 Y            */
-#define SCREEN_WAVE_H        560     /* 波形区高度              */
+/* 波形绘图区参数 (10.1 寸大彩屏 1024x600) */
+#define SCREEN_WAVE_X0       20      /* 波形区起点 X            */
+#define SCREEN_WAVE_Y0       60      /* 波形区起点 Y (中心 Y=300) */
+#define SCREEN_WAVE_H        480     /* 波形区高度              */
+#define SCREEN_WAVE_W        980     /* 波形区宽度              */
 
 void BSP_Screen_Init(void);                                   /* USART1 初始化           */
 void BSP_Screen_Send(const uint8_t *buf, uint16_t len);       /* DMA 异步发送            */
